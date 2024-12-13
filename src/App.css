@@ -20,6 +20,17 @@ html {
   scroll-snap-type: y mandatory;
 }
 
+.container {
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory; /* Hỗ trợ cuộn theo từng phần */
+}
+
+.container > div {
+  scroll-snap-align: start;
+}
+
+
 .container::-webkit-scrollbar {
   display: none;
 }
