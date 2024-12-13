@@ -3,6 +3,10 @@ import './App.css';
 import VideoCard from './components/VideoCard';
 import BottomNavbar from './components/BottomNavbar';
 import TopNavbar from './components/TopNavbar';
+import video1 from './videos/video1.mp4';
+import video2 from './videos/video2.mp4';
+import video3 from './videos/video3.mp4';
+import video4 from './videos/video4.mp4';
 
 const videoUrls = [
   {
@@ -52,118 +56,38 @@ const videoUrls = [
 ];
 
 function App() {
-  const [videos, setVideos] = useState([]);
-  const [filteredVideos, setFilteredVideos] = useState([]);
+  const [videos, setVideos] = useState(videoUrls);
+  const [filteredVideos, setFilteredVideos] = useState(videoUrls);
   const [searchQuery, setSearchQuery] = useState('');
   const videoRefs = useRef([]);
-  const containerRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [scrollTop, setScrollTop] = useState(0);
 
   useEffect(() => {
-    setVideos(videoUrls);
-    setFilteredVideos(videoUrls); // Initially show all videos
-  }, []);
-
-  const handleSearch = (event) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handleSearchSubmit = (event) => {
-    if (event.key === 'Enter') {
+    if (searchQuery) {
       const hashtag = searchQuery.trim().toLowerCase();
+      let filtered = videos;
+
       if (hashtag.startsWith('#')) {
-        // If the search query starts with a hashtag, search for the hashtag in the description
-        const filtered = videos.filter((video) =>
+        filtered = videos.filter((video) =>
           video.description.toLowerCase().includes(hashtag)
         );
-        setFilteredVideos(filtered);
       } else {
-        // If it's just a regular search term, fallback to searching within descriptions
-        const filtered = videos.filter((video) =>
+        filtered = videos.filter((video) =>
           video.description.toLowerCase().includes(searchQuery.toLowerCase())
         );
-        setFilteredVideos(filtered);
       }
+
+      setFilteredVideos(filtered);
+    } else {
+      setFilteredVideos(videos);
     }
-  };
-
-  const handleVideoRef = (index) => (ref) => {
-    videoRefs.current[index] = ref;
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setStartY(e.pageY - containerRef.current.offsetTop);
-    setScrollTop(containerRef.current.scrollTop);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-
-    const y = e.pageY - containerRef.current.offsetTop;
-    const walk = (y - startY) * 2; // Scroll speed multiplier
-    containerRef.current.scrollTop = scrollTop - walk;
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-
-    // Snap to nearest video
-    if (containerRef.current) {
-      const videoHeight = window.innerHeight;
-      const currentScroll = containerRef.current.scrollTop;
-      const nearestVideo =
-        Math.round(currentScroll / videoHeight) * videoHeight;
-
-      containerRef.current.scrollTo({
-        top: nearestVideo,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  const handleWheel = (e) => {
-    e.preventDefault();
-
-    const videoHeight = window.innerHeight;
-    const currentScroll = containerRef.current.scrollTop;
-    const direction = e.deltaY > 0 ? 1 : -1;
-
-    const nextPosition =
-      direction > 0
-        ? Math.ceil(currentScroll / videoHeight) * videoHeight
-        : Math.floor(currentScroll / videoHeight) * videoHeight;
-
-    containerRef.current.scrollTo({
-      top: nextPosition,
-      behavior: "smooth",
-    });
-  };
-
-  useEffect(() => {
-    const container = containerRef.current;
-    container.addEventListener('mousedown', handleMouseDown);
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('mouseup', handleMouseUp);
-    container.addEventListener('mouseleave', handleMouseUp);
-
-    return () => {
-      container.removeEventListener('mousedown', handleMouseDown);
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseup', handleMouseUp);
-      container.removeEventListener('mouseleave', handleMouseUp);
-    };
-  }, [isDragging]);
+  }, [searchQuery, videos]);
 
   return (
     <div className="app">
-      <div className="container" ref={containerRef} onWheel={handleWheel}>
+      <div className="container">
         <TopNavbar
           setSearchQuery={setSearchQuery} // Directly update searchQuery in App
           searchQuery={searchQuery}
-          handleSearchSubmit={handleSearchSubmit} // Add a submit function for Enter key
         />
         {filteredVideos.map((video, index) => (
           <VideoCard
@@ -177,7 +101,8 @@ function App() {
             shares={video.shares}
             url={video.url}
             profilePic={video.profilePic}
-            setVideoRef={handleVideoRef(index)} // Ref for each video
+            setVideoRef={(ref) => (videoRefs.current[index] = ref)}
+            autoplay={index === 0}
           />
         ))}
         <BottomNavbar />
